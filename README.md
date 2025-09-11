@@ -45,6 +45,50 @@ Repo Layer (In-memory persistence)        [storage boundary]
     Domain Models (Library / Document / Chunk [+ Metadata])
 ```
 
+```mermaid
+flowchart LR
+  U(["Client / SDK"]) --> R["API Layer - FastAPI Routers: (DTO parse/validate)"]
+  R --> S["Service Layer: validation + business rules"]
+
+  subgraph Concurrency
+    L["LibraryLockRegistry: read/write locks per library"]
+    V["Optimistic Versioning: update_if_version (CAS)"]
+  end
+
+  S -- acquire R/W lock --> L
+  S -->|read/write| REP["Repos (In-Memory)"]
+  S --> IDX["IndexRegistry: ensures & swaps per-library index"]
+  IDX --> I1["FlatIndex"]
+  IDX --> I2["LSHIndex"]
+  IDX --> I3["IVFIndex"]
+
+  %% Move Repos subgraph right after its references
+  REP --> DM["Entity Models: Library / Document / Chunk (+ Metadata)"]
+  V -. applied by repos .- REP
+
+  subgraph Repos
+    direction TB
+    RL[(LibraryRepo)]
+    RD[(DocumentRepo)]
+    RC[(ChunkRepo)]
+    RL -->|list/get/add/delete| RD
+    RD -->|list_by_library| RC
+    RC -->|list_by_library / list_by_document| RC
+  end
+
+  %% Link the "REP" node to the appropriate repo node for clarity
+  REP --- RL
+
+  %% Search path
+  S -- query --> IDX
+  IDX -->|kNN candidates| S
+  S -->|hydrate chunks/docs| REP
+
+  %% Response
+  S --> R
+  R --> U
+```
+
 **Responsibilities**
 - **API Layer**: parse/validate DTOs, map to service calls, convert domain errors → HTTP.
 - **Service Layer**: enforce business rules (dim checks, existence), acquire locks, call repos, maintain index, commit via CAS (`update_if_version`), release locks.
