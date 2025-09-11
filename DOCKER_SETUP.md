@@ -84,4 +84,3 @@ make stop
 - `Dockerfile` - Unified container for dev/prod
 - `docker-compose.yml` - Simple deployment
 - `Makefile` - Build and run commands
-- `scripts/docker-scripts.sh` - Alternative helper scripts

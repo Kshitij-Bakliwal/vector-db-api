@@ -134,7 +134,6 @@ vector-db-api/
 │       └── main.py              # Application entry point
 ├── tests/                       # Test suite
 ├── examples/                    # Usage examples
-├── scripts/                     # Utility scripts
 ├── .github/workflows/           # CI/CD workflows
 ├── docker-compose.yml           # Docker Compose configuration
 ├── Dockerfile                   # Docker image definition
