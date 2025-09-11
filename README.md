@@ -1,13 +1,14 @@
+## 1. VectorDB API — Document Indexing & Semantic Search
+
 A production-ready REST API layer built on top of a vector database for document indexing and semantic search. This API allows users to create libraries of documents, chunk them into searchable pieces, and perform powerful semantic search queries using vector embeddings.
 
 ## 2. Features
 - **Library & Chunk CRUD**: create, read, update, delete libraries and chunks (bulk upserts supported).
 - **Per-Library Indexing**: pluggable index per library (Flat / LSH / IVF), hot-swappable via config.
-- **k-Nearest Neighbor Search**: cosine-similarity search with optional document/chunk filters.
+- **k-Nearest Neighbor Search**: cosine-similarity (configurable) search with optional document/chunk filters.
 - **Concurrency Safety**: per-library read/write locks + optimistic concurrency (`version` + CAS).
 - **Typed Schemas**: Pydantic models for domain entities and (optional) typed metadata.
-- **Durability (optional)**: JSON snapshot to disk + index rebuild on startup (Docker volume).
-- **Clean layering**: API → Services → Concurrency → Repos (DDD-inspired separation).
+- **Clean Layering**: API → Services → Concurrency → Repos (DDD-inspired separation).
 
 ## 3. Architecture
 
@@ -21,6 +22,7 @@ A production-ready REST API layer built on top of a vector database for document
 - Clients supply embeddings; the API does **not** generate embeddings.
 - In-memory repositories are used.
 - Single-process API (one worker) to keep in-memory state coherent.
+- CRUD operations on documents in a library might be needed in the future and thus added similar to chunks in a library.
 
 ### 3.3 Out-of-Scope
 - Multi-process clustering / sharding across nodes.
@@ -29,21 +31,6 @@ A production-ready REST API layer built on top of a vector database for document
 - External persistent stores (e.g., Postgres/pgvector) — can be added later by swapping repos.
 
 ### 3.4 High-Level Design (DDD-inspired)
-```
-Client/SDK
-   ↓
-API Layer (FastAPI Routers + DTOs)        [transport boundary]
-   ↓
-Service Layer (Application use-cases)     [domain boundary]
-   ↓
-Concurrency Layer                         [cross-cutting: RW locks + optimistic versioning]
-   ↓
-Repo Layer (In-memory persistence)        [storage boundary]
-   ↘
-    Index Registry → [Flat | LSH | IVF]   (per-library index, rebuilt as needed)
-   ↘
-    Domain Models (Library / Document / Chunk [+ Metadata])
-```
 
 ```mermaid
 flowchart LR
@@ -93,12 +80,15 @@ flowchart LR
 - **API Layer**: parse/validate DTOs, map to service calls, convert domain errors → HTTP.
 - **Service Layer**: enforce business rules (dim checks, existence), acquire locks, call repos, maintain index, commit via CAS (`update_if_version`), release locks.
 - **Concurrency Layer**: per-library read/write locks (sorted dual-lock order for cross-library ops) + optimistic versioning (prevent lost updates).
-- **Repo Layer**: store domain models, maintain secondary indexes (`_by_library`, `_by_document`), support bulk deletes; return deep copies.
+- **Repo Layer**: store entity models, maintain secondary indexes (`_by_library`, `_by_document`), support bulk deletes; return deep copies.
 - **Index Registry/Indexes**: per-library handle; `add/update/remove/search/rebuild`. Index data is volatile; rebuilt from chunks on startup and after config changes.
 
 ### 3.5 Indexing & Querying Flow
-*Mermaid diagrams to be added later.*  
-(Flow: API → Service(read/write lock) → Repo CRUD → Index update/search → map to DTO → return.)
+*Diagrams to be added.*  
+
+[Indexing Flow Diagram]
+
+[Querying Flow Diagram]
 
 ### 3.6 Indexing Strategies
 
