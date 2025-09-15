@@ -223,9 +223,9 @@ response = requests.post(f"http://localhost:8000/libraries/{library_id}/document
       "chunks": [
          { "text": "hello vector world", "position": 0, "embedding": [1.0, 0.0, 0.0],  "metadata": { "tags": ["intro"] } },
          { "text": "semantic search is fun", "position": 1, "embedding": [0.9, 0.1, 0.0],  "metadata": { "tags": ["search"] } },
-         { "text": "vector embeddings map meaning", "position": 2, "embedding": [0.85, 0.15, 0.0], "metadata": { "tags": ["embeddings"] } },
+         { "text": "vector embeddings map meaning", "position": 2, "embedding": [0.8, 0.0, 0.2], "metadata": { "tags": ["embeddings"] } },
          { "text": "apples and oranges comparison", "position": 3, "embedding": [0.0, 1.0, 0.0],  "metadata": { "tags": ["fruits"] } },
-         { "text": "cosine similarity measures angle", "position": 4, "embedding": [0.8, 0.0, 0.2], "metadata": { "tags": ["similarity"] } }
+         { "text": "cosine similarity measures angle", "position": 4, "embedding": [0.85, 0.15, 0.0], "metadata": { "tags": ["similarity"] } }
       ]
 })
 # Check the response
@@ -237,6 +237,8 @@ response = requests.post(f"http://localhost:8000/libraries/{library_id}/search",
       "k": 3
 })
 results = response.json()["results"]
+
+print(*results, sep='\n\n')
 ```
 
 ## 🧪 Testing
@@ -246,14 +248,12 @@ results = response.json()["results"]
 pip install .[dev]
 
 # Run all tests
-python run_tests.py
+python tests/run_tests.py
 
-# Run with coverage
-python run_tests.py --coverage
 
 # Run specific test types
-python run_tests.py --unit
-python run_tests.py --integration
+python tests/run_tests.py --unit
+python tests/run_tests.py --integration
 
 # Using Docker
 make test

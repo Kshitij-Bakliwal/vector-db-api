@@ -8,7 +8,7 @@ import os
 import subprocess
 from pathlib import Path
 
-def run_tests(test_path=None, verbose=False, coverage=False, markers=None):
+def run_tests(test_path=None, verbose=False, coverage=False, markers=None, is_unit=False, is_integration=False):
     """Run tests with pytest"""
     
     # Add src to Python path
@@ -46,8 +46,8 @@ def run_tests(test_path=None, verbose=False, coverage=False, markers=None):
         else:
             cmd.append('.')  # Current directory (tests/)
     
-    # Add marker filters if specified
-    if markers:
+    # Add marker filters if specified (but not for unit/integration directory runs)
+    if markers and not (is_unit or is_integration):
         cmd.extend(['-m', ' or '.join(markers)])
     
     # Add additional pytest options
@@ -110,7 +110,9 @@ def main():
         test_path=test_path,
         verbose=args.verbose,
         coverage=args.coverage,
-        markers=markers
+        markers=markers,
+        is_unit=args.unit,
+        is_integration=args.integration
     )
     
     sys.exit(0 if success else 1)
