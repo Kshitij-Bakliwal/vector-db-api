@@ -5,7 +5,7 @@ A production-ready REST API layer built on top of a vector database for document
 ## 2. Features
 - **Library & Chunk CRUD**: create, read, update, delete libraries and chunks (bulk upserts supported).
 - **Per-Library Indexing**: pluggable index per library (Flat / LSH / IVF), hot-swappable via config.
-- **k-Nearest Neighbor Search**: cosine-similarity (configurable) search with optional document/chunk filters.
+- **k-Nearest Neighbor Search with Filtering**: cosine-similarity (configurable) search with optional document/chunk filters.
 - **Concurrency Safety**: per-library read/write locks + optimistic concurrency (`version` + CAS).
 - **Typed Schemas**: Pydantic models for domain entities and (optional) typed metadata.
 - **Clean Layering**: API → Services → Concurrency → Repos (DDD-inspired separation).
@@ -83,12 +83,11 @@ flowchart LR
 - **Repo Layer**: store entity models, maintain secondary indexes (`_by_library`, `_by_document`), support bulk deletes; return deep copies.
 - **Index Registry/Indexes**: per-library handle; `add/update/remove/search/rebuild`. Index data is volatile; rebuilt from chunks on startup and after config changes.
 
-### 3.5 Indexing & Querying Flow
-*Diagrams to be added.*  
+### 3.5 Indexing & Querying Flow 
 
-[Indexing Flow Diagram]
+Indexing Flow: `demos/indexing_sequence_diagram.png`
 
-[Querying Flow Diagram]
+Querying Flow: `demos/querying_sequence_diagram.png`
 
 ### 3.6 Indexing Strategies
 
@@ -133,12 +132,10 @@ vector-db-api/
 │       ├── concurrency/         # Concurrency utilities
 │       └── main.py              # Application entry point
 ├── tests/                       # Test suite
-├── examples/                    # Usage examples
-├── .github/workflows/           # CI/CD workflows
 ├── docker-compose.yml           # Docker Compose configuration
 ├── Dockerfile                   # Docker image definition
 ├── Makefile                     # Development commands
-└── pyproject.toml              # Python packaging and dependencies
+└── pyproject.toml               # Python packaging and dependencies
 ```
 
 ## 5. Installation
@@ -262,9 +259,10 @@ make test
 ## 6. Possible Next Improvements
 - **Pluggable persistence**: swap in Postgres/pgvector repos; keep services/API unchanged.
 - **AuthN/AuthZ & multi-tenancy**: API keys, tenants, quotas.
+- **External IDs for documents**: support a stable external_id natural key (e.g., URL/S3 path) for idempotent upserts, deduping, and easy re-ingestion.
+- **Optimized index selection**: auto-choose index per library based on size & usage (e.g., Flat <100k vectors; IVF for 100k–10M; LSH for high-throughput cosine; consider dynamic thresholds + telemetry-driven reconfiguration).
 - **Index metrics & tuning**: per-library stats (build time, candidate sizes, recall).
 - **WAL (write-ahead log)**: near-zero data loss between snapshots; snapshot + WAL replay on startup.
-- **Streaming & hybrid search**: add keyword BM25 + vector hybrid scoring.
 - **Observability**: structured logs, Prometheus metrics, trace IDs.
 - **CI/CD**: GitHub Actions workflow to build/test/push Docker images.
 - **Rate limiting & DoS hardening**: via Nginx or upstream gateway.
