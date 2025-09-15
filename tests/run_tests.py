@@ -12,7 +12,7 @@ def run_tests(test_path=None, verbose=False, coverage=False, markers=None):
     """Run tests with pytest"""
     
     # Add src to Python path
-    src_path = os.path.join(os.path.dirname(__file__), 'src')
+    src_path = os.path.join(os.path.dirname(__file__), '..', 'src')
     if src_path not in sys.path:
         sys.path.insert(0, src_path)
     
@@ -27,9 +27,24 @@ def run_tests(test_path=None, verbose=False, coverage=False, markers=None):
     
     # Add test path if specified
     if test_path:
-        cmd.append(test_path)
+        # If running from project root, prepend 'tests/' to relative paths
+        if not os.path.isabs(test_path) and not test_path.startswith('tests/'):
+            # Check if we're running from tests directory
+            if os.path.basename(os.getcwd()) == 'tests':
+                # We're in tests directory, use relative path
+                cmd.append(test_path)
+            else:
+                # We're in project root, prepend 'tests/'
+                test_path = os.path.join('tests', test_path)
+                cmd.append(test_path)
+        else:
+            cmd.append(test_path)
     else:
-        cmd.append('tests/')
+        # If running from project root, use tests/ directory
+        if os.path.basename(os.getcwd()) != 'tests':
+            cmd.append('tests/')
+        else:
+            cmd.append('.')  # Current directory (tests/)
     
     # Add marker filters if specified
     if markers:
@@ -79,13 +94,13 @@ def main():
     markers = []
     
     if args.unit:
-        test_path = 'tests/unit/'
+        test_path = 'unit/'
         markers.append('unit')
     elif args.integration:
-        test_path = 'tests/integration/'
+        test_path = 'integration/'
         markers.append('integration')
     elif args.cohere:
-        test_path = 'tests/integration/test_cohere_embeddings.py'
+        test_path = 'integration/test_cohere_embeddings.py'
         markers.append('cohere')
     elif args.external:
         markers.append('external')

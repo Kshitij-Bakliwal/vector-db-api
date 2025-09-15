@@ -147,7 +147,7 @@ vector-db-api/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/vector-db-api.git
+git clone https://github.com/Kshitij-Bakliwal/vector-db-api.git
 cd vector-db-api
 
 # Create virtual environment
@@ -155,10 +155,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -e .
-
-# Or install in development mode with dev dependencies
-pip install -e .[dev]
+pip install .
 ```
 
 ### Option 2: Using Docker
@@ -213,22 +210,31 @@ import requests
 
 # Create a library
 response = requests.post("http://localhost:8000/libraries", json={
-    "name": "My Documents",
-    "description": "A collection of my documents"
+    "name": "demo-lib",
+    "embedding_dim": 3,
+    "index_config": { "type": "flat" },
+    "metadata": {}
 })
 library_id = response.json()["id"]
 
-# Add a document
-response = requests.post("http://localhost:8000/documents", json={
-    "title": "Sample Document",
-    "content": "This is a sample document for testing.",
-    "library_id": library_id
+# Add a document with chunks
+response = requests.post(f"http://localhost:8000/libraries/{library_id}/documents/with-chunks", json={
+      "metadata": {},
+      "chunks": [
+         { "text": "hello vector world", "position": 0, "embedding": [1.0, 0.0, 0.0],  "metadata": { "tags": ["intro"] } },
+         { "text": "semantic search is fun", "position": 1, "embedding": [0.9, 0.1, 0.0],  "metadata": { "tags": ["search"] } },
+         { "text": "vector embeddings map meaning", "position": 2, "embedding": [0.85, 0.15, 0.0], "metadata": { "tags": ["embeddings"] } },
+         { "text": "apples and oranges comparison", "position": 3, "embedding": [0.0, 1.0, 0.0],  "metadata": { "tags": ["fruits"] } },
+         { "text": "cosine similarity measures angle", "position": 4, "embedding": [0.8, 0.0, 0.2], "metadata": { "tags": ["similarity"] } }
+      ]
 })
+# Check the response
+response
 
-# Search documents
-response = requests.post("http://localhost:8000/search", json={
-    "query": "sample document",
-    "library_id": library_id
+# Perform a query embedding based search
+response = requests.post(f"http://localhost:8000/libraries/{library_id}/search", json={
+      "query_embedding": [0.95, 0.05, 0.0],
+      "k": 3
 })
 results = response.json()["results"]
 ```
@@ -236,6 +242,9 @@ results = response.json()["results"]
 ## 🧪 Testing
 
 ```bash
+# Install dev dependencies
+pip install .[dev]
+
 # Run all tests
 python run_tests.py
 
